@@ -1,0 +1,29 @@
+# --- local / private project data (opt-in privacy mode) ---
+projects/_local/
+work/_local/
+handoffs/_local/
+
+# --- binary evidence: artifacts store references, not binaries ---
+work/**/*.png
+work/**/*.jpg
+work/**/*.jpeg
+work/**/*.gif
+work/**/*.mp4
+work/**/*.webm
+work/**/*.har
+work/**/*.zip
+
+# --- secrets / local auth (never store these anyway) ---
+.env
+.env.*
+*.pem
+*.key
+**/credentials*
+**/secrets*
+
+# --- runtime / tooling noise ---
+node_modules/
+tmp/
+*.log
+.DS_Store
+Thumbs.db
