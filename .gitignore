@@ -22,7 +22,8 @@ work/**/*.zip
 **/secrets*
 
 # --- runtime / tooling noise ---
-node_modules/
+__pycache__/
+*.pyc
 tmp/
 *.log
 .DS_Store

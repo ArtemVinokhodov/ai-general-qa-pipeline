@@ -14,7 +14,7 @@ changes with regression risk.
 ## Inputs
 
 - Query (Jira ID, title, keywords, source fragment)
-- Saved QA work found via `node scripts/gqa.js find <query>` (or user-provided path)
+- Saved QA work found via `python scripts/gqa.py find <query>` (or user-provided path)
 
 ## Outputs
 

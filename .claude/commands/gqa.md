@@ -28,7 +28,7 @@ show the short usage below and stop.
    Slack update") — no repeated `/gqa` needed.
 5. Persistence: one artifact per QA work at
    `work/<project>/<ticket-or-readable-title>.md`, format `templates/qa-work.md`.
-   After saving, run `node scripts/gqa.js validate <path>` and fix errors.
+   After saving, run `python scripts/gqa.py validate <path>` and fix errors.
 6. Never store secrets (passwords, tokens, keys, cookies, auth headers) in any
    artifact; redact and warn.
 
@@ -51,7 +51,7 @@ artifact.
 
 ### /gqa retest <query>
 Skills: `retest-regression` (+ `verification`, `reporting`).
-Find the saved work with `node scripts/gqa.js find <query>` — one confident
+Find the saved work with `python scripts/gqa.py find <query>` — one confident
 match: use it; several: list, don't guess; none: say so. Append Retest History
 to the SAME artifact; never duplicate it.
 

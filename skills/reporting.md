@@ -20,7 +20,7 @@ and `/gqa handoff`; follow-ups like "make a short Slack update".
 
 - `Final Verdict` block per `templates/qa-summary.md` (short, not a report)
 - Saved artifact at `work/<project>/<ticket-or-readable-title>.md`, validated by
-  `node scripts/gqa.js validate <path>`
+  `python scripts/gqa.py validate <path>`
 - On request: Jira bug/comment, Slack update, QA summary, retest/regression
   summary, automation handoff at `handoffs/<project>-<task>-automation.md`
 

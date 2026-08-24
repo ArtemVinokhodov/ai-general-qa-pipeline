@@ -17,7 +17,7 @@ work, normal follow-ups continue it.
   retest-regression, reporting.
 - Artifact format: `templates/qa-work.md`. One QA work = one file at
   `work/<project>/<ticket-or-readable-title>.md`.
-- Deterministic guardrails: `node scripts/gqa.js validate|find|list`.
+- Deterministic guardrails: `python scripts/gqa.py validate|find|list`.
   Always validate an artifact after saving it.
 
 ## Non-negotiable rules

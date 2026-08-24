@@ -2,7 +2,7 @@
 
 <!--
 One QA work = one file. Path: work/<project>/<ticket-or-readable-title>.md
-Keep it small. Machine-validated by: node scripts/gqa.js validate
+Keep it small. Machine-validated by: python scripts/gqa.py validate
 Section headers, ID formats (REQ-/CHK-/FIND-/DEF-NNN) and "- Key: value" lines
 are part of the contract — do not rename them.
 -->

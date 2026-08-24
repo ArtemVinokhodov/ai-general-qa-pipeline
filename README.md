@@ -5,8 +5,9 @@ Plug it into any project and run a repeatable QA workflow with Claude Code:
 requirements → risks → checks → verification → findings → defects → retest →
 regression → coverage → verdict → optional automation handoff.
 
-**Prerequisite:** Node.js >= 16 — required for the deterministic tooling
-(`scripts/gqa.js validate | find | list`). Install it separately if not present.
+**Prerequisite:** Python 3.10+ — required for the deterministic tooling
+(`scripts/gqa.py validate | find | list`). Standard library only, no packages
+to install.
 
 ## 1. Problem
 
@@ -19,7 +20,7 @@ how to retest. Results are inconsistent and nothing persists between sessions.
 - An explicit entry point (`/gqa`) into a fixed, repeatable QA workflow.
 - Internal skill contracts (`skills/*.md`) that govern every stage.
 - One small Markdown artifact per QA work, searchable weeks later.
-- Deterministic guardrails in code (`scripts/gqa.js`) that validate artifacts,
+- Deterministic guardrails in code (`scripts/gqa.py`) that validate artifacts,
   find saved work, and list open work.
 - Project-agnostic core + per-project profiles (`projects/<name>/PROJECT_CONTEXT.md`).
 
@@ -36,7 +37,7 @@ off framework-agnostic automation candidates.
 .claude/commands/gqa.md   ← single entry point, subcommand dispatcher
 skills/                   ← 6 internal stage contracts (not user-invoked)
 templates/                ← artifact / profile / bug / summary / handoff formats
-scripts/gqa.js            ← deterministic validate | find | list (zero-dep Node)
+scripts/gqa.py            ← deterministic validate | find | list (stdlib Python)
 projects/<name>/          ← Project Profile (the only project-specific input)
 work/<project>/           ← one Markdown artifact per QA work
 handoffs/                 ← optional automation handoffs
@@ -76,7 +77,12 @@ not need repeated `/gqa`.
 One QA work = one file: `work/<project>/<ticket-or-readable-title>.md`
 (format: `templates/qa-work.md`). Internal IDs (REQ/CHK/FIND/DEF-NNN) exist for
 traceability, but you search by Jira ID, title, keywords or source fragment:
-`node scripts/gqa.js find payment timeout`.
+`python scripts/gqa.py find payment timeout`.
+
+Scope note: `find` and `list` search only real QA work under `work/`.
+`examples/` is covered by `validate` but intentionally excluded from
+operational search, so demo artifacts never appear in retest lookups or open
+work lists.
 
 ## 9. Evidence rules
 

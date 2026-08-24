@@ -61,7 +61,7 @@ writes PASS because the expected behavior "looks logical".
 ```
 
 or by keywords: `/gqa retest email validation`. Claude finds the saved work
-(`node scripts/gqa.js find ...` under the hood), restores the failing check and
+(`python scripts/gqa.py find ...` under the hood), restores the failing check and
 its reproduction, re-verifies it, runs a small justified regression scope, and
 appends a `### Retest <date>` entry to the same artifact. One confident match →
 used; several → you pick from a list; none → it says so.
@@ -101,15 +101,15 @@ No new `/gqa` call needed.
 ## Deterministic tooling
 
 ```bash
-node scripts/gqa.js validate
+python scripts/gqa.py validate
 ```
 
 ```bash
-node scripts/gqa.js find payment timeout
+python scripts/gqa.py find payment timeout
 ```
 
 ```bash
-node scripts/gqa.js list --open
+python scripts/gqa.py list --open
 ```
 
 The validator rejects: invalid statuses, PASS/FAIL without evidence, duplicate
