@@ -40,6 +40,14 @@ SECRET_PATTERNS = [
 
 # ---------- artifact discovery ----------
 
+def read_text(path):
+    """Read a Markdown artifact as UTF-8, tolerating a BOM.
+
+    Raises OSError / UnicodeDecodeError; callers decide how to report."""
+    with open(path, encoding='utf-8-sig') as fh:
+        return fh.read()
+
+
 def is_qa_work(content):
     return re.search(r'^# QA Work:', content, re.M) is not None
 
@@ -58,18 +66,26 @@ def walk_md(directory, acc):
     return acc
 
 
-def all_artifacts(dirs):
+def all_artifacts(dirs, bad=None):
+    """Return QA work artifact paths under dirs.
+
+    Unreadable/non-UTF-8 files never abort the walk: they are appended to
+    `bad` as (path, reason) when a list is given, otherwise reported to
+    stderr as a warning and skipped."""
     files = []
     for d in dirs:
         walk_md(os.path.join(ROOT, d), files)
     result = []
     for f in files:
         try:
-            with open(f, encoding='utf-8') as fh:
-                if is_qa_work(fh.read()):
-                    result.append(f)
-        except OSError:
-            pass
+            if is_qa_work(read_text(f)):
+                result.append(f)
+        except (OSError, UnicodeDecodeError) as e:
+            if bad is not None:
+                bad.append((f, str(e)))
+            else:
+                print('warning: skipping unreadable file {} ({})'.format(
+                    rel(f), e), file=sys.stderr)
     return result
 
 # ---------- parsing ----------
@@ -156,8 +172,15 @@ def is_empty_val(v):
 def validate_artifact(file):
     errors = []
     warnings = []
-    with open(file, encoding='utf-8') as fh:
-        content = fh.read()
+    try:
+        content = read_text(file)
+    except (OSError, UnicodeDecodeError) as e:
+        return {'file': file,
+                'errors': ['cannot read file as UTF-8 ({}); fix the file '
+                           'encoding — artifacts must be UTF-8'.format(e)],
+                'warnings': [],
+                'counts': {s: 0 for s in CHECK_STATUSES},
+                'verdict': '', 'art': parse_artifact('')}
     art = parse_artifact(content)
     err = errors.append
     warn = warnings.append
@@ -248,6 +271,28 @@ def validate_artifact(file):
     if rec == 'READY' and verdict != 'PASS':
         err('Recommendation READY requires Verdict PASS (got {})'.format(verdict or 'none'))
 
+    # requirement -> check coverage
+    req_ids = []
+    for h in art['id_headings']:
+        if h['id'].startswith('REQ-') and h['id'] not in req_ids:
+            req_ids.append(h['id'])
+    covered = set()
+    for c in art['checks']:
+        for r in re.split(r'[,\s]+', c['fields'].get('Requirement', '').strip()):
+            if re.match(r'^REQ-\d{3}$', r):
+                covered.add(r)
+    uncovered = [r for r in req_ids if r not in covered]
+    if verdict == 'PASS':
+        if req_ids and not art['checks']:
+            err('Final Verdict PASS with {} requirement(s) but no checks'.format(
+                len(req_ids)))
+        else:
+            for r in uncovered:
+                err('{} has no referencing check — required for Verdict PASS'.format(r))
+    else:
+        for r in uncovered:
+            warn('{} has no referencing check yet'.format(r))
+
     # secrets
     for pattern, what in SECRET_PATTERNS:
         m = pattern.search(content)
@@ -265,12 +310,18 @@ def rel(f):
 
 
 def cmd_validate(args):
+    bad = []
     targets = [os.path.abspath(os.path.join(ROOT, a)) for a in args] if args \
-        else all_artifacts(VALIDATE_DIRS)
-    if not targets:
+        else all_artifacts(VALIDATE_DIRS, bad)
+    if not targets and not bad:
         print('No QA work artifacts found.')
         return 0
     failed = 0
+    for f, reason in bad:
+        failed += 1
+        print('INVALID  {}'.format(rel(f)))
+        print('  error: cannot read file as UTF-8 ({}); fix the file '
+              'encoding — artifacts must be UTF-8'.format(reason))
     for f in targets:
         if not os.path.exists(f):
             print('ERROR {}: file not found'.format(f), file=sys.stderr)
@@ -286,7 +337,7 @@ def cmd_validate(args):
             print('OK       {}'.format(rel(f)))
         for w in r['warnings']:
             print('  warn:  {}'.format(w))
-    print('\n{} artifact(s), {} invalid.'.format(len(targets), failed))
+    print('\n{} artifact(s), {} invalid.'.format(len(targets) + len(bad), failed))
     return 1 if failed else 0
 
 
@@ -297,8 +348,12 @@ def cmd_find(terms):
     q = [t.lower() for t in terms]
     results = []
     for f in all_artifacts(OPERATIONAL_DIRS):
-        with open(f, encoding='utf-8') as fh:
-            content = fh.read().lower()
+        try:
+            content = read_text(f).lower()
+        except (OSError, UnicodeDecodeError) as e:
+            print('warning: skipping unreadable file {} ({})'.format(rel(f), e),
+                  file=sys.stderr)
+            continue
         name = rel(f).lower()
         score = 0
         for t in q:
@@ -315,8 +370,7 @@ def cmd_find(terms):
         print('No saved QA work matches the query.')
         return 0
     for f, score in results[:10]:
-        with open(f, encoding='utf-8') as fh:
-            art = parse_artifact(fh.read())
+        art = parse_artifact(read_text(f))
         print('{}\t{}\t{}\t[{}]'.format(
             score, rel(f), art['title'] or '',
             (art['verdict'].get('Verdict') or '?').strip()))
@@ -351,6 +405,13 @@ def cmd_list(args):
 # ---------- main ----------
 
 def main(argv):
+    # Windows: piped stdout/stderr default to the ANSI code page, which
+    # garbles or crashes on non-ASCII titles. Force UTF-8 where supported.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding='utf-8', errors='replace')
+        except (AttributeError, ValueError, OSError):
+            pass
     cmd = argv[1] if len(argv) > 1 else None
     rest = argv[2:]
     if cmd == 'validate':

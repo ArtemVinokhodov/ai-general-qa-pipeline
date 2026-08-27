@@ -43,6 +43,14 @@ regression considerations, automation candidates if any.
 
 ### /gqa test <source>
 Full QA workflow.
+Continuation first: before creating a new QA work, search for an existing one
+with `python scripts/gqa.py find <task id / title / keywords>`. Exactly one
+confident match for the same task (typically Type: plan) → continue THAT
+artifact: add verification results, findings, defects and the verdict to it,
+update `Type` to test — never create a second file for the same QA work.
+Several plausible matches → show them and ask; don't guess. None → start a new
+QA work. If the given source materially differs from the found artifact's
+recorded source, do not merge silently — ask the user first.
 Skills: `task-context` → `test-design` → `verification` → `defect-analysis`
 (if failures) → `reporting`.
 Where direct execution is impossible, run human-in-the-loop verification per
